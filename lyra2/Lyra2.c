@@ -55,7 +55,6 @@ int LYRA2(uint64_t* wholeMatrix, void *K, uint64_t kLen, const void *pwd, uint64
     int64_t step = 1; //Visitation step (used during Setup and Wandering phases)
     int64_t window = 2; //Visitation window (used to define which rows can be revisited during Setup)
     int64_t gap = 1; //Modifier to the step, assuming the values 1 or -1
-    int64_t i; //auxiliary iteration counter
     //==========================================================================/
 
     //========== Initializing the Memory Matrix and pointers to it =============//
@@ -65,7 +64,6 @@ int LYRA2(uint64_t* wholeMatrix, void *K, uint64_t kLen, const void *pwd, uint64
     const int64_t ROW_LEN_INT64 = BLOCK_LEN_INT64 * nCols;
     const int64_t ROW_LEN_BYTES = ROW_LEN_INT64 * 8;
 
-    i = (int64_t) ((int64_t) nRows * (int64_t) ROW_LEN_BYTES);
     if (wholeMatrix == NULL) {
       return -1;
     }
@@ -122,7 +120,7 @@ int LYRA2(uint64_t* wholeMatrix, void *K, uint64_t kLen, const void *pwd, uint64
     //================================ Setup Phase =============================//
     //Absorbing salt, password and basil: this is the only place in which the block length is hard-coded to 512 bits
     uint64_t *ptrWord = wholeMatrix;
-    for (i = 0; i < nBlocksInput; i++) {
+    for (int i = 0; i < nBlocksInput; i++) {
       absorbBlockBlake2Safe(state, ptrWord); //absorbs each block of pad(pwd || salt || basil)
       ptrWord += BLOCK_LEN_BLAKE2_SAFE_INT64; //goes to next block of pad(pwd || salt || basil)
     }
@@ -189,10 +187,6 @@ int LYRA2(uint64_t* wholeMatrix, void *K, uint64_t kLen, const void *pwd, uint64
     //==========================================================================/
 
     //========================= Freeing the memory =============================//
-    //_mm_free(memMatrix);
-
-    //Wiping out the sponge's internal state before freeing it
-//    memset(state, 0, 16 * sizeof (uint64_t));
     _mm_free(state);
     //==========================================================================/
 
