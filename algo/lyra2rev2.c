@@ -61,7 +61,7 @@ int scanhash_lyra2rev2(int thr_id, struct work *work, uint32_t max_nonce, uint64
 			work_set_target_ratio(work, hash);
 			pdata[19] = nonce;
 			*hashes_done = pdata[19] - first_nonce;
-//			_mm_free(wholeMatrix);
+			_mm_free(wholeMatrix);
 			return 1;
 		}
 		nonce++;
@@ -70,6 +70,6 @@ int scanhash_lyra2rev2(int thr_id, struct work *work, uint32_t max_nonce, uint64
 
 	pdata[19] = nonce;
 	*hashes_done = pdata[19] - first_nonce + 1;
-//	_mm_free(wholeMatrix);
+	_mm_free(wholeMatrix);
 	return 0;
 }
