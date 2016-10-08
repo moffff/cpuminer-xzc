@@ -35,7 +35,7 @@ int scanhash_lyra2rev2(int thr_id, struct work *work, uint32_t max_nonce, uint64
 {
 
 	size_t size = (int64_t) ((int64_t) height * 256 * 96);
-    uint64_t *wholeMatrix = _mm_malloc(size, 128);
+    uint64_t *wholeMatrix = _mm_malloc(size, 64);
 
 	uint32_t _ALIGN(128) hash[8];
 	uint32_t _ALIGN(128) endiandata[20];
