@@ -366,7 +366,7 @@ inline void reducedDuplexRowSetup(uint64_t *state, uint64_t *rowIn, uint64_t *ro
  * @param rowOut         Row receiving the output
  *
  */
-inline void reducedDuplexRow(uint64_t *state, uint64_t *rowIn, uint64_t *rowInOut, uint64_t *rowOut, uint64_t nCols, uint64_t nRows, uint64_t* memMatrix) {
+inline void reducedDuplexRow(uint64_t *state, uint64_t *rowIn, uint64_t *rowInOut, uint64_t *rowOut, uint64_t nCols) {
     uint64_t* ptrWordInOut = rowInOut; //In Lyra2: pointer to row*
     uint64_t* ptrWordIn = rowIn; //In Lyra2: pointer to prev
     uint64_t* ptrWordOut = rowOut; //In Lyra2: pointer to row
@@ -402,15 +402,6 @@ inline void reducedDuplexRow(uint64_t *state, uint64_t *rowIn, uint64_t *rowInOu
 
 		//Applies the reduced-round transformation f to the sponge's state
 		reducedBlake2bLyra(state);
-#ifdef ROW_PREFETCH
-		if (i == nCols-1) {
-			uint32_t next = ((uint64_t) (state[0])) % nRows;
-			for(int i=0; i<prefetch_distance;i+=3) {
-			    	_mm_prefetch(&memMatrix[next*12*nCols], _MM_HINT_T0);
-			    	_mm_prefetch(&memMatrix[next*12*nCols+2], _MM_HINT_T0);
-			}
-		}
-#endif
 
 		//M[rowOut][col] = M[rowOut][col] XOR rand
 		vptrWordOut[0] = _mm256_xor_si256(vptrWordOut[0], vstate[0]);

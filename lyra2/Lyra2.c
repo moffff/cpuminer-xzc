@@ -165,7 +165,7 @@ int LYRA2(uint64_t* wholeMatrix, void *K, uint64_t kLen, const void *pwd, uint64
         //------------------------------------------------------------------------------------------
 
         //Performs a reduced-round duplexing operation over M[row*] XOR M[prev], updating both M[row*] and M[row]
-        reducedDuplexRow(state, &wholeMatrix[prev*ROW_LEN_INT64], &wholeMatrix[rowa*ROW_LEN_INT64], &wholeMatrix[row*ROW_LEN_INT64], nCols, nRows, wholeMatrix);
+        reducedDuplexRow(state, &wholeMatrix[prev*ROW_LEN_INT64], &wholeMatrix[rowa*ROW_LEN_INT64], &wholeMatrix[row*ROW_LEN_INT64], nCols);
 
         //update prev: it now points to the last row ever computed
         prev = row;
