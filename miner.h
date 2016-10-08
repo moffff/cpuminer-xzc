@@ -500,7 +500,7 @@ void inkhash(void *state, const void *input); /* shavite */
 void lbry_hash(void *output, const void *input);
 void luffahash(void *output, const void *input);
 void lyra2_hash(void *state, const void *input);
-void lyra2rev2_hash(void *state, const void *input, uint32_t height);
+void lyra2rev2_hash(uint64_t* wholeMatrix, void *state, const void *input, uint32_t height);
 void myriadhash(void *output, const void *input);
 void neoscrypt(unsigned char *output, const unsigned char *password, uint32_t profile);
 void nist5hash(void *output, const void *input);

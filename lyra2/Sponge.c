@@ -24,7 +24,7 @@
 #include "Sponge.h"
 #include "Lyra2.h"
 
-
+#include <immintrin.h>
 
 /**
  * Initializes the Sponge State. The first 512 bits are set to zeros and the remainder
@@ -257,62 +257,77 @@ inline void reducedDuplexRow1(uint64_t *state, uint64_t *rowIn, uint64_t *rowOut
  *
  */
 inline void reducedDuplexRowSetup(uint64_t *state, uint64_t *rowIn, uint64_t *rowInOut, uint64_t *rowOut, uint64_t nCols) {
+
     uint64_t* ptrWordIn = rowIn;				//In Lyra2: pointer to prev
     uint64_t* ptrWordInOut = rowInOut;				//In Lyra2: pointer to row*
     uint64_t* ptrWordOut = rowOut + (nCols-1)*BLOCK_LEN_INT64; //In Lyra2: pointer to row
+
     int i;
 
     for (i = 0; i < nCols; i++) {
-    //Absorbing "M[prev] [+] M[row*]"
-    state[0]  ^= (ptrWordIn[0]  + ptrWordInOut[0]);
-    state[1]  ^= (ptrWordIn[1]  + ptrWordInOut[1]);
-    state[2]  ^= (ptrWordIn[2]  + ptrWordInOut[2]);
-    state[3]  ^= (ptrWordIn[3]  + ptrWordInOut[3]);
-    state[4]  ^= (ptrWordIn[4]  + ptrWordInOut[4]);
-    state[5]  ^= (ptrWordIn[5]  + ptrWordInOut[5]);
-    state[6]  ^= (ptrWordIn[6]  + ptrWordInOut[6]);
-    state[7]  ^= (ptrWordIn[7]  + ptrWordInOut[7]);
-    state[8]  ^= (ptrWordIn[8]  + ptrWordInOut[8]);
-    state[9]  ^= (ptrWordIn[9]  + ptrWordInOut[9]);
-    state[10] ^= (ptrWordIn[10] + ptrWordInOut[10]);
-    state[11] ^= (ptrWordIn[11] + ptrWordInOut[11]);
 
-    //Applies the reduced-round transformation f to the sponge's state
-    reducedBlake2bLyra(state);
+    	__m256i* vstate = (__m256i*)state;
+    	__m256i* vptrWordIn = (__m256i*)ptrWordIn;				//In Lyra2: pointer to prev
+    	__m256i* vptrWordInOut = (__m256i*)ptrWordInOut;				//In Lyra2: pointer to row*
+    	__m256i* vptrWordOut = (__m256i*)ptrWordOut; //In Lyra2: pointer to row
 
-    //M[row][col] = M[prev][col] XOR rand
-    ptrWordOut[0] = ptrWordIn[0]  ^ state[0];
-    ptrWordOut[1] = ptrWordIn[1]  ^ state[1];
-    ptrWordOut[2] = ptrWordIn[2]  ^ state[2];
-    ptrWordOut[3] = ptrWordIn[3]  ^ state[3];
-    ptrWordOut[4] = ptrWordIn[4]  ^ state[4];
-    ptrWordOut[5] = ptrWordIn[5]  ^ state[5];
-    ptrWordOut[6] = ptrWordIn[6]  ^ state[6];
-    ptrWordOut[7] = ptrWordIn[7]  ^ state[7];
-    ptrWordOut[8] = ptrWordIn[8]  ^ state[8];
-    ptrWordOut[9] = ptrWordIn[9]  ^ state[9];
-    ptrWordOut[10] = ptrWordIn[10] ^ state[10];
-    ptrWordOut[11] = ptrWordIn[11] ^ state[11];
+		//Absorbing "M[prev] [+] M[row*]"
+    	vstate[0] = _mm256_xor_si256(vstate[0], _mm256_add_epi64(vptrWordIn[0], vptrWordInOut[0]));
+    	vstate[1] = _mm256_xor_si256(vstate[1], _mm256_add_epi64(vptrWordIn[1], vptrWordInOut[1]));
+    	vstate[2] = _mm256_xor_si256(vstate[2], _mm256_add_epi64(vptrWordIn[2], vptrWordInOut[2]));
+//		state[0]  ^= (ptrWordIn[0]  + ptrWordInOut[0]);
+//		state[1]  ^= (ptrWordIn[1]  + ptrWordInOut[1]);
+//		state[2]  ^= (ptrWordIn[2]  + ptrWordInOut[2]);
+//		state[3]  ^= (ptrWordIn[3]  + ptrWordInOut[3]);
+//		state[4]  ^= (ptrWordIn[4]  + ptrWordInOut[4]);
+//		state[5]  ^= (ptrWordIn[5]  + ptrWordInOut[5]);
+//		state[6]  ^= (ptrWordIn[6]  + ptrWordInOut[6]);
+//		state[7]  ^= (ptrWordIn[7]  + ptrWordInOut[7]);
+//		state[8]  ^= (ptrWordIn[8]  + ptrWordInOut[8]);
+//		state[9]  ^= (ptrWordIn[9]  + ptrWordInOut[9]);
+//		state[10] ^= (ptrWordIn[10] + ptrWordInOut[10]);
+//		state[11] ^= (ptrWordIn[11] + ptrWordInOut[11]);
 
-    //M[row*][col] = M[row*][col] XOR rotW(rand)
-    ptrWordInOut[0]  ^= state[11];
-    ptrWordInOut[1]  ^= state[0];
-    ptrWordInOut[2]  ^= state[1];
-    ptrWordInOut[3]  ^= state[2];
-    ptrWordInOut[4]  ^= state[3];
-    ptrWordInOut[5]  ^= state[4];
-    ptrWordInOut[6]  ^= state[5];
-    ptrWordInOut[7]  ^= state[6];
-    ptrWordInOut[8]  ^= state[7];
-    ptrWordInOut[9]  ^= state[8];
-    ptrWordInOut[10] ^= state[9];
-    ptrWordInOut[11] ^= state[10];
 
-    //Inputs: next column (i.e., next block in sequence)
-    ptrWordInOut += BLOCK_LEN_INT64;
-    ptrWordIn += BLOCK_LEN_INT64;
-    //Output: goes to previous column
-    ptrWordOut -= BLOCK_LEN_INT64;
+		//Applies the reduced-round transformation f to the sponge's state
+		reducedBlake2bLyra(state);
+
+		//M[row][col] = M[prev][col] XOR rand
+		vptrWordOut[0] = _mm256_xor_si256(vptrWordIn[0], vstate[0]);
+		vptrWordOut[1] = _mm256_xor_si256(vptrWordIn[1], vstate[1]);
+		vptrWordOut[2] = _mm256_xor_si256(vptrWordIn[2], vstate[2]);
+//		ptrWordOut[0] = ptrWordIn[0]  ^ state[0];
+//		ptrWordOut[1] = ptrWordIn[1]  ^ state[1];
+//		ptrWordOut[2] = ptrWordIn[2]  ^ state[2];
+//		ptrWordOut[3] = ptrWordIn[3]  ^ state[3];
+//		ptrWordOut[4] = ptrWordIn[4]  ^ state[4];
+//		ptrWordOut[5] = ptrWordIn[5]  ^ state[5];
+//		ptrWordOut[6] = ptrWordIn[6]  ^ state[6];
+//		ptrWordOut[7] = ptrWordIn[7]  ^ state[7];
+//		ptrWordOut[8] = ptrWordIn[8]  ^ state[8];
+//		ptrWordOut[9] = ptrWordIn[9]  ^ state[9];
+//		ptrWordOut[10] = ptrWordIn[10] ^ state[10];
+//		ptrWordOut[11] = ptrWordIn[11] ^ state[11];
+
+		//M[row*][col] = M[row*][col] XOR rotW(rand)
+		ptrWordInOut[0]  ^= state[11];
+		ptrWordInOut[1]  ^= state[0];
+		ptrWordInOut[2]  ^= state[1];
+		ptrWordInOut[3]  ^= state[2];
+		ptrWordInOut[4]  ^= state[3];
+		ptrWordInOut[5]  ^= state[4];
+		ptrWordInOut[6]  ^= state[5];
+		ptrWordInOut[7]  ^= state[6];
+		ptrWordInOut[8]  ^= state[7];
+		ptrWordInOut[9]  ^= state[8];
+		ptrWordInOut[10] ^= state[9];
+		ptrWordInOut[11] ^= state[10];
+
+		//Inputs: next column (i.e., next block in sequence)
+		ptrWordInOut += BLOCK_LEN_INT64;
+		ptrWordIn += BLOCK_LEN_INT64;
+		//Output: goes to previous column
+		ptrWordOut -= BLOCK_LEN_INT64;
     }
 }
 

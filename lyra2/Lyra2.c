@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <mm_malloc.h>
 #include "Lyra2.h"
 #include "Sponge.h"
 
@@ -43,7 +44,7 @@
  *
  * @return 0 if the key is generated correctly; -1 if there is an error (usually due to lack of memory for allocation)
  */
-int LYRA2(void *K, uint64_t kLen, const void *pwd, uint64_t pwdlen, const void *salt, uint64_t saltlen, uint64_t timeCost, uint64_t nRows, uint64_t nCols) {
+int LYRA2(uint64_t* wholeMatrix, void *K, uint64_t kLen, const void *pwd, uint64_t pwdlen, const void *salt, uint64_t saltlen, uint64_t timeCost, uint64_t nRows, uint64_t nCols) {
 
     //============================= Basic variables ============================//
     int64_t row = 2; //index of row to be processed
@@ -64,14 +65,13 @@ int LYRA2(void *K, uint64_t kLen, const void *pwd, uint64_t pwdlen, const void *
     const int64_t ROW_LEN_BYTES = ROW_LEN_INT64 * 8;
 
     i = (int64_t) ((int64_t) nRows * (int64_t) ROW_LEN_BYTES);
-    uint64_t *wholeMatrix = malloc(i);
     if (wholeMatrix == NULL) {
       return -1;
     }
     memset(wholeMatrix, 0, i);
 
     //Allocates pointers to each row of the matrix
-    uint64_t **memMatrix = malloc(nRows * sizeof (uint64_t*));
+    uint64_t **memMatrix = _mm_malloc(nRows * sizeof (uint64_t*), 32);
     if (memMatrix == NULL) {
       return -1;
     }
@@ -123,7 +123,7 @@ int LYRA2(void *K, uint64_t kLen, const void *pwd, uint64_t pwdlen, const void *
 
     //======================= Initializing the Sponge State ====================//
     //Sponge state: 16 uint64_t, BLOCK_LEN_INT64 words of them for the bitrate (b) and the remainder for the capacity (c)
-    uint64_t *state = malloc(16 * sizeof (uint64_t));
+    uint64_t *state = _mm_malloc(16 * sizeof (uint64_t), 32);
     if (state == NULL) {
       return -1;
     }
@@ -201,12 +201,11 @@ int LYRA2(void *K, uint64_t kLen, const void *pwd, uint64_t pwdlen, const void *
     //==========================================================================/
 
     //========================= Freeing the memory =============================//
-    free(memMatrix);
-    free(wholeMatrix);
+    _mm_free(memMatrix);
 
     //Wiping out the sponge's internal state before freeing it
-    memset(state, 0, 16 * sizeof (uint64_t));
-    free(state);
+//    memset(state, 0, 16 * sizeof (uint64_t));
+    _mm_free(state);
     //==========================================================================/
 
     return 0;

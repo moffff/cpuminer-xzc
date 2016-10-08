@@ -2366,7 +2366,7 @@ void print_hash_tests(void)
 	lyra2_hash(&hash[0], &buf[0]);
 	printpfx("lyra2", hash);
 
-	lyra2rev2_hash(&hash[0], &buf[0], 32);
+	lyra2rev2_hash(0, &hash[0], &buf[0], 32);
 	printpfx("lyra2v2", hash);
 
 	myriadhash(&hash[0], &buf[0]);
