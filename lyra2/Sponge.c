@@ -366,7 +366,7 @@ inline void reducedDuplexRowSetup(uint64_t *state, uint64_t *rowIn, uint64_t *ro
  * @param rowOut         Row receiving the output
  *
  */
-inline void reducedDuplexRow(uint64_t *state, uint64_t *rowIn, uint64_t *rowInOut, uint64_t *rowOut, uint64_t nCols) {
+inline void reducedDuplexRow(uint64_t *state, uint64_t *rowIn, uint64_t *rowInOut, uint64_t *rowOut, uint64_t nCols, uint64_t nRows, uint64_t* memMatrix) {
     uint64_t* ptrWordInOut = rowInOut; //In Lyra2: pointer to row*
     uint64_t* ptrWordIn = rowIn; //In Lyra2: pointer to prev
     uint64_t* ptrWordOut = rowOut; //In Lyra2: pointer to row
@@ -377,7 +377,24 @@ inline void reducedDuplexRow(uint64_t *state, uint64_t *rowIn, uint64_t *rowInOu
 	__m256i* vptrWordInOut = (__m256i*)ptrWordInOut;				//In Lyra2: pointer to row*
 	__m256i* vptrWordOut = (__m256i*)ptrWordOut; //In Lyra2: pointer to row
 
+	int prefetch_distance = 3*3;
+#ifdef ROW_PREFETCH
+	for(int i=0; i<prefetch_distance; i+=3) {
+    	_mm_prefetch(vptrWordOut+i, _MM_HINT_T0);
+    	_mm_prefetch(vptrWordOut+2+i, _MM_HINT_T0);
+    	_mm_prefetch(vptrWordInOut+i, _MM_HINT_T0);
+    	_mm_prefetch(vptrWordInOut+2+i, _MM_HINT_T0);
+	}
+#endif
+
     for (int i = 0; i < nCols; i++) {
+#ifdef ROW_PREFETCH
+    	_mm_prefetch(vptrWordOut+prefetch_distance, _MM_HINT_T0);
+    	_mm_prefetch(vptrWordOut+2+prefetch_distance, _MM_HINT_T0);
+    	_mm_prefetch(vptrWordInOut+prefetch_distance, _MM_HINT_T0);
+    	_mm_prefetch(vptrWordInOut+2+prefetch_distance, _MM_HINT_T0);
+#endif
+
 		//Absorbing "M[prev] [+] M[row*]"
     	vstate[0] = _mm256_xor_si256(vstate[0], _mm256_add_epi64(vptrWordIn[0], vptrWordInOut[0]));
     	vstate[1] = _mm256_xor_si256(vstate[1], _mm256_add_epi64(vptrWordIn[1], vptrWordInOut[1]));
@@ -385,6 +402,15 @@ inline void reducedDuplexRow(uint64_t *state, uint64_t *rowIn, uint64_t *rowInOu
 
 		//Applies the reduced-round transformation f to the sponge's state
 		reducedBlake2bLyra(state);
+#ifdef ROW_PREFETCH
+		if (i == nCols-1) {
+			uint32_t next = ((uint64_t) (state[0])) % nRows;
+			for(int i=0; i<prefetch_distance;i+=3) {
+			    	_mm_prefetch(&memMatrix[next*12*nCols], _MM_HINT_T0);
+			    	_mm_prefetch(&memMatrix[next*12*nCols+2], _MM_HINT_T0);
+			}
+		}
+#endif
 
 		//M[rowOut][col] = M[rowOut][col] XOR rand
 		vptrWordOut[0] = _mm256_xor_si256(vptrWordOut[0], vstate[0]);
@@ -404,6 +430,7 @@ inline void reducedDuplexRow(uint64_t *state, uint64_t *rowIn, uint64_t *rowInOu
 		vptrWordInOut += (BLOCK_LEN_INT64 / 4);
 		vptrWordIn += (BLOCK_LEN_INT64 / 4);
     }
+
 #else 
     for (int i = 0; i < nCols; i++) {
 		//Absorbing "M[prev] [+] M[row*]"
