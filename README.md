@@ -10,9 +10,9 @@ Use -a lyra2rev2 for XZC mining on pools like on https://xzc.suprnova.cc
 This contains following optimizations by optiminer:
 * Some unnecessary computations and memory accesses removed.
 * Code for AVX2 can be enabled by compiling with "-mavx2":
-$ CFLAGS="-O2 -mavx2" ./configure && make
+$ CFLAGS="-O2 -mavx2" ./configure && make clean && make
 * Memory prefetching can be enabled by compiling with "-mavx2":
-$ CFLAGS="-O2 -DROW_PREFETCH" ./configure && make
+$ CFLAGS="-O2 -DROW_PREFETCH" ./configure && make clean && make
 
 The different flags can also be combined. If you are building for your local CPU, use "-march=native" as well.
 The hash algorithm is memory bandwith bound, therefore AVX2 / prefetching will not have a big impact on performance. 
