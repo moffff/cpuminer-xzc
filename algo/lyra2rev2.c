@@ -14,19 +14,23 @@
 
 void lyra2rev2_hash(uint64_t* wholeMatrix, void *state, const void *input, uint32_t height)
 {
+#ifdef VERBOSE_HASH_TIMING
 	struct timespec spec;
     clock_gettime(CLOCK_REALTIME, &spec);
     double start = spec.tv_sec + spec.tv_nsec / 1.0e9;
+#endif
 
 	uint32_t _ALIGN(64) hash[16];
 
 	LYRA2(wholeMatrix, hash, 32, input, 80, input, 80, 2, height, 256);
 
+#ifdef VERBOSE_HASH_TIMING
     if (hash[0] % 32 == 0) {
     	clock_gettime(CLOCK_REALTIME, &spec);
     	double end = spec.tv_sec + spec.tv_nsec / 1.0e9;
     	printf("Hash time: %f ms\n", (end - start) * 1000);
     }
+#endif
 
 	memcpy(state, hash, 32);
 }
