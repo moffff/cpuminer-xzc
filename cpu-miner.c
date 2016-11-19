@@ -2162,9 +2162,13 @@ static void *miner_thread(void *userdata)
 		case ALGO_LYRA2:
 			rc = scanhash_lyra2(thr_id, &work, max_nonce, &hashes_done);
 			break;
-		case ALGO_LYRA2REV2:
-			rc = scanhash_lyra2rev2(thr_id, &work, max_nonce, &hashes_done, stratum.bloc_height);
-			break;
+                case ALGO_LYRA2REV2:
+                        if (stratum.bloc_height >= 8192) {
+                        rc = scanhash_lyra2rev2(thr_id, &work, max_nonce, &hashes_done, 8192);
+                        } else {
+                        rc = scanhash_lyra2rev2(thr_id, &work, max_nonce, &hashes_done, stratum.bloc_height);
+                        }
+                        break;
 		case ALGO_MYR_GR:
 			rc = scanhash_myriad(thr_id, &work, max_nonce, &hashes_done);
 			break;
