@@ -2166,7 +2166,7 @@ static void *miner_thread(void *userdata)
                         if (stratum.bloc_height >= 8192) {
                         rc = scanhash_lyra2rev2(thr_id, &work, max_nonce, &hashes_done, 8192);
                         } else {
-                        rc = scanhash_lyra2rev2(thr_id, &work, max_nonce, &hashes_done, stratum.bloc_height);
+                        rc = scanhash_lyra2rev2(thr_id, &work, max_nonce, &hashes_done, 4);
                         }
                         break;
 		case ALGO_MYR_GR:
